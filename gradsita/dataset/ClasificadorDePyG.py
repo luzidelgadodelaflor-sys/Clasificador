@@ -47,9 +47,10 @@ y_pred = modelo.predict(X_test)
 print("Precisión:", accuracy_score(y_test, y_pred))
 
 # Probar con una imagen nueva
-imagen_prueba = Image.open("dataset/Imagendaprueba/prueba3.jpg").convert('L').resize((64, 64))
+imagen_prueba = Image.open("gradsita/dataset/Imagendaprueba/prueba3.jpg").convert('L').resize((64, 64))
 img_array = np.array(imagen_prueba).flatten().reshape(1, -1)
 prediccion = modelo.predict(img_array)
 
 print("Predicción:", "Gato 😺" if prediccion[0] == 1 else "Perro 🐶")
+
 
