@@ -6,8 +6,8 @@ from sklearn.metrics import accuracy_score
 from PIL import Image
 
 # Rutas
-ruta_perros = "dataset/perros"
-ruta_gatos = "dataset/gatos"
+ruta_perros = "gradsita/dataset/perros"
+ruta_gatos = "gradsita/dataset/gatos"
 
 # Preparar listas
 imagenes = []
@@ -52,3 +52,4 @@ img_array = np.array(imagen_prueba).flatten().reshape(1, -1)
 prediccion = modelo.predict(img_array)
 
 print("Predicción:", "Gato 😺" if prediccion[0] == 1 else "Perro 🐶")
+
