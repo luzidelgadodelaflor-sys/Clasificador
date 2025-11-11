@@ -7,64 +7,68 @@ from PIL import Image
 import streamlit as st
 
 st.title("Clasificador de Perros y Gatos 🐶🐱")
-st.write("Este modelo usa regresión logística para clasificar imágenes.")
+st.write("Este modelo usa regresión logística para clasificar imágenes de perros y gatos.")
 
-# Rutas
+# === Rutas ===
 ruta_perros = "gradsita/dataset/perros"
 ruta_gatos = "gradsita/dataset/gatos"
+ruta_pruebas = "gradsita/dataset/Imagendaprueba"
 
+# === Verificar carpetas ===
+for ruta in [ruta_perros, ruta_gatos, ruta_pruebas]:
+    if not os.path.exists(ruta):
+        st.error(f"❌ No se encontró la carpeta: {ruta}")
+        st.stop()
+
+# === Cargar imágenes de entrenamiento ===
 imagenes = []
-etiquetas = []  # 0 = perro, 1 = gato
+etiquetas = []
 
-# Verificar si las carpetas existen
-if not os.path.exists(ruta_perros) or not os.path.exists(ruta_gatos):
-    st.error("❌ No se encontraron las carpetas de datos. Verifica las rutas.")
-    st.stop()
+st.write("📦 Cargando imágenes...")
 
-# Cargar imágenes de perros
-st.write("Cargando imágenes de perros...")
 for archivo in os.listdir(ruta_perros):
-    if archivo.endswith((".jpg", ".png", ".jpeg")):
-        img = Image.open(os.path.join(ruta_perros, archivo)).convert('L')
-        img = img.resize((64, 64))
-        img_array = np.array(img).flatten()
-        imagenes.append(img_array)
+    if archivo.lower().endswith((".jpg", ".jpeg", ".png")):
+        img = Image.open(os.path.join(ruta_perros, archivo)).convert('L').resize((64, 64))
+        imagenes.append(np.array(img).flatten())
         etiquetas.append(0)
 
-# Cargar imágenes de gatos
-st.write("Cargando imágenes de gatos...")
 for archivo in os.listdir(ruta_gatos):
-    if archivo.endswith((".jpg", ".png", ".jpeg")):
-        img = Image.open(os.path.join(ruta_gatos, archivo)).convert('L')
-        img = img.resize((64, 64))
-        img_array = np.array(img).flatten()
-        imagenes.append(img_array)
+    if archivo.lower().endswith((".jpg", ".jpeg", ".png")):
+        img = Image.open(os.path.join(ruta_gatos, archivo)).convert('L').resize((64, 64))
+        imagenes.append(np.array(img).flatten())
         etiquetas.append(1)
 
-# Entrenar modelo
-st.write("Entrenando modelo...")
+# === Entrenar modelo ===
+st.write("🤖 Entrenando modelo...")
 X = np.array(imagenes)
 y = np.array(etiquetas)
+
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
 modelo = LogisticRegression(max_iter=1000)
 modelo.fit(X_train, y_train)
 
-# Evaluar
-y_pred = modelo.predict(X_test)
-precision = accuracy_score(y_test, y_pred)
+precision = accuracy_score(y_test, modelo.predict(X_test))
 st.success(f"✅ Precisión del modelo: {precision*100:.2f}%")
 
-# Probar con una imagen nueva
-st.subheader("Prueba con una imagen nueva 📸")
-ruta_prueba = "gradsita/dataset/Imagendaprueba/prueba3.jpg"
+# === Seleccionar imagen de prueba ===
+st.subheader("📸 Selecciona una imagen para probar")
 
-if os.path.exists(ruta_prueba):
-    imagen_prueba = Image.open(ruta_prueba).convert('L').resize((64, 64))
-    st.image(imagen_prueba, caption="Imagen de prueba", use_column_width=True)
-    img_array = np.array(imagen_prueba).flatten().reshape(1, -1)
-    prediccion = modelo.predict(img_array)
-    resultado = "😺 Gato" if prediccion[0] == 1 else "🐶 Perro"
-    st.info(f"Predicción del modelo: {resultado}")
+imagenes_disponibles = [f for f in os.listdir(ruta_pruebas) if f.lower().endswith((".jpg", ".jpeg", ".png"))]
+
+if len(imagenes_disponibles) == 0:
+    st.warning("⚠️ No hay imágenes en la carpeta de pruebas.")
 else:
-    st.warning("⚠️ No se encontró la imagen de prueba.")
+    imagen_seleccionada = st.selectbox("Elige una imagen:", imagenes_disponibles)
+
+    if st.button("Clasificar imagen seleccionada"):
+        ruta_imagen = os.path.join(ruta_pruebas, imagen_seleccionada)
+        imagen_prueba = Image.open(ruta_imagen).convert('L').resize((64, 64))
+
+        st.image(ruta_imagen, caption="Imagen seleccionada", use_column_width=True)
+
+        img_array = np.array(imagen_prueba).flatten().reshape(1, -1)
+        prediccion = modelo.predict(img_array)
+
+        resultado = "😺 Es un gato" if prediccion[0] == 1 else "🐶 Es un perro"
+        st.info(resultado)
